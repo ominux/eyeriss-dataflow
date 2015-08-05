@@ -63,7 +63,48 @@ e                           =   x(3);
 k                           =   x(4);
 h                           =   U*e + R - U;
 beta                        =   e/h;
-l                           =   min([e floor(sqrt(J2))]);
+
+%% buffer level accesses optimization ------------------------------------------
+
+% x = [b l]
+array_size_constraint       =   @(x) ...
+                                deal ...
+                                ( ... bl^2 - J^2
+                                    ( x(1) * x(2) * x(2) - J2 ), ...
+                                    [] ...
+                                );
+
+num_buff_acc_func           =   @(x) ...
+                                ( ... num_inputs * M * (alpha/gamma)^2 + num_weight * ceil(N/b) * ceil(E/l)^2
+                                    num_ifmap_values * M * ( alpha / (x(2)/(U*x(2)+R-U)) )^2 + ...
+                                    num_weights * ceil(N/x(1)) * ceil(E/x(2))^2 ...
+                                );
+
+num_buff_acc                =   Inf;
+x                           =   zeros(1, 2);
+ga_opts                     =   gaoptimset('Display', 'off');
+for i = 1:num_trials
+    [curr_x, curr_buff_acc, ~]  = ...
+                                ga ...
+                                ( ...
+                                    num_buff_acc_func, ...          % minimization target
+                                    2, ...                          % number variables in x
+                                    [], [], ...                     % linear inequality constraints
+                                    [], [], ...                     % blank
+                                    [1; 1], ...                     % lower bound of x
+                                    [n; e], ...                     % upper bound of x
+                                    array_size_constraint, ...      % non-linear constraints
+                                    [1 2], ...                      % integer constraints
+                                    ga_opts ...                     % ga options
+                                );
+    if curr_buff_acc < num_buff_acc
+        num_buff_acc        =   curr_buff_acc;
+        x                   =   curr_x;
+    end
+end
+
+b                           =   x(1);
+l                           =   x(2);
 w                           =   U*l + R - U;
 gamma                       =   l/w;
 
@@ -77,6 +118,7 @@ params.k                    =   k;
 params.h                    =   h;
 params.w                    =   w;
 params.l                    =   l;
+params.b                    =   b;
 params.beta                 =   beta;
 params.gamma                =   gamma;
 
@@ -87,11 +129,11 @@ reuse.memory.weight         =   ceil(N/n) * ceil(E/e)^2;
 
 reuse.buffer.ofmap          =   1;
 reuse.buffer.ifmap          =   m * (beta/gamma)^2;
-reuse.buffer.weight         =   n * ceil(e/l)^2;
+reuse.buffer.weight         =   (n/b) * ceil(e/l)^2;
 
 reuse.array.ofmap           =   1;
 reuse.array.ifmap           =   R^2 * gamma^2;
-reuse.array.weight          =   l^2;
+reuse.array.weight          =   b*l^2;
 
 reuse.reg.ofmap             =   C*R^2;
 reuse.reg.ifmap             =   1;
@@ -102,7 +144,7 @@ access.memory.reads         =   num_ifmap_values * ceil(M/m) * (alpha/beta)^2   
                                 num_weights * ceil(N/n) * ceil(E/e)^2;
 access.memory.writes        =   num_ofmap_values;
 access.buffer.reads         =   num_ifmap_values * M * (alpha/gamma)^2          + ...
-                                num_weights * N * ceil(E/l)^2;
+                                num_weights * (N/b) * ceil(E/l)^2;
 access.buffer.writes        =   0;
 access.array.wiring         =   num_ifmap_values * M * alpha^2 * R^2            + ...
                                 num_weights * N * E^2;
@@ -110,7 +152,7 @@ access.reg.reads            =   num_ofmap_values * ( C*R^2 - 1 );
 access.reg.writes           =   num_ofmap_values * ( C*R^2 - 1 );
 
 % thruput
-thruput.active_pes          =   l^2;
+thruput.active_pes          =   b*l^2;
 thruput.active_pe_percent   =   thruput.active_pes/J2;
 
 end

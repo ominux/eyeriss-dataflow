@@ -27,7 +27,7 @@ WL                                          =   2;
 %% architecture parameters -----------------------------------------------------
 
 % total number of PEs (J^2)
-% J2                                          =   256;
+% J2                                          =   512;
 % register file size per PE [byte]
 % G_byte                                      =   512;
 % buffe size [byte]
@@ -38,7 +38,7 @@ WL                                          =   2;
 %% other parameters ------------------------------------------------------------
 
 % number of trials to run optimization in order to avoid local minimal
-num_trials                                  =   30;
+num_trials                                  =   100;
 
 %% parallel computation setup --------------------------------------------------
 
@@ -129,10 +129,11 @@ end
 % Finding the best reg file size for weight stationary flow under constant area
 
 % % parameter setup
-% J2                                          =   256;
-% A                                           =   4400000;
-% N                                           =   1;
-% alexnet_layer_id                            =   2;
+% J2                                          =   512;
+% G_byte_default                              =   512;
+% A                                           =   get_total_storage_area(J2, J2 * G_byte_default, G_byte_default);
+% N                                           =   128;
+% alexnet_layer_id                            =   5;
 % G_byte_sweep                                =   64:64:1024;
 % % run sweep
 % [results, energy_cost_array]                =   ws_flow_reg_sweep(J2, A, N, alexnet_layer_id, WL, G_byte_sweep, num_trials);
@@ -149,9 +150,9 @@ end
 %% test 4 ----------------------------------------------------------------------
 
 % comparing all flows
-J2                                          =   256;%[64 128 256 512];
-N                                           =   128;%[1 16 64 128];
-alexnet_layer_id                            =   5;%[1 2 3 4 5];
+J2                                          =   [128 256 512 1024];
+N                                           =   [1 16 64 128];
+alexnet_layer_id                            =   [1 2 3 4 5];
 G_byte_default                              =   512;
 
 if enable_multicores
