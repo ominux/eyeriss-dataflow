@@ -1,4 +1,4 @@
-function E = energy_cost(access)
+function E = get_energy_cost(access)
     
     % energy cost ratio
 %     cost_alu                =   1;

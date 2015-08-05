@@ -1,4 +1,4 @@
-function    [access, reuse, params] = output_stationary_shidiannao_flow(N, C, M, H, R, E, U, alpha, J2, Q_byte, ~, WL, num_trials)
+function    [access, reuse, params] = os_sdn_flow(N, C, M, H, R, E, U, alpha, J2, Q_byte, ~, WL, num_trials)
 
 %% num data --------------------------------------------------------------------
 

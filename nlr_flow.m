@@ -1,4 +1,4 @@
-function    [access, reuse, params] = channel_reuse_flow(N, C, M, H, R, E, U, alpha, J2, Q_byte, ~, WL, num_trials)
+function    [access, reuse, params] = nlr_flow(N, C, M, H, R, E, U, alpha, J2, Q_byte, ~, WL, num_trials)
    
 %% num data --------------------------------------------------------------------
 

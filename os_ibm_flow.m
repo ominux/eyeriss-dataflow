@@ -1,4 +1,4 @@
-function    [access, reuse, params] = output_stationary_ibm_flow(N, C, M, H, R, E, ~, alpha, J2, Q_byte, ~, WL, num_trials)
+function    [access, reuse, params] = os_ibm_flow(N, C, M, H, R, E, ~, alpha, J2, Q_byte, ~, WL, num_trials)
 
 %% num data --------------------------------------------------------------------
 
