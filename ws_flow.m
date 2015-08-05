@@ -1,4 +1,4 @@
-function    [access, reuse, params] = ws_flow(N, C, M, H, R, E, U, alpha, J2, Q_byte, G_byte, WL, num_trials)
+function    [access, reuse, params, thruput] = ws_flow(N, C, M, H, R, E, U, alpha, J2, Q_byte, G_byte, WL, num_trials)
 
 %% num data --------------------------------------------------------------------
 
@@ -102,5 +102,9 @@ access.array.wiring         =   num_ifmap_values * M * R^2 * alpha^2            
 access.reg.reads            =   num_weights * N * E^2                           + ...
                                 num_ofmap_values * ( C*R^2 - ceil(C/q)*R^2 );
 access.reg.writes           =   num_ofmap_values * ( C*R^2 - ceil(C/q)*R^2 );
+
+% thruput
+thruput.active_pes          =   R^2 * r * t;
+thruput.active_pe_percent   =   thruput.active_pes/J2;
 
 end

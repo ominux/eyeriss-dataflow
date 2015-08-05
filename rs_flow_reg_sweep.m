@@ -9,7 +9,7 @@ function [results, energy_bar_plot_array] = rs_flow_reg_sweep(J2, A, N, alexnet_
     % run flow optimization
     for i = 1:length(G_byte_sweep)
         Q_byte                                  =   get_buffer_size(A, J2, G_byte_sweep(i));
-        [access, reuse, params]                 =   rs_flow(N, C, M, H, R, E, U, alpha, J2, Q_byte, G_byte_sweep(i), WL, num_trials);
+        [access, reuse, params, thruput]        =   rs_flow(N, C, M, H, R, E, U, alpha, J2, Q_byte, G_byte_sweep(i), WL, num_trials);
         % collect result
         params.J2                               =   J2;
         params.A                                =   A;
@@ -20,6 +20,7 @@ function [results, energy_bar_plot_array] = rs_flow_reg_sweep(J2, A, N, alexnet_
         results{i}.reuse                        =   reuse;
         results{i}.access                       =   access;
         results{i}.params                       =   params;
+        results{i}.thruput                      =   thruput;
         results{i}.energy_cost                  =   get_energy_cost(access);
         energy_bar_plot_array(i)                =   results{i}.energy_cost;
     end

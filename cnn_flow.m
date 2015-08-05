@@ -1,9 +1,14 @@
 close all; clear; clc; 
 
+%% system config ---------------------------------------------------------------
+
+% enable the use of multicores
+enable_multicores                           =   1;
+
 %% problem size parameters -----------------------------------------------------
 
 % choose the layer in AlexNet to run the tests
-% alexnet_layer_id                            =   2;
+% alexnet_layer_id                            =   5;
 % batch_size
 % N                                           =   128;
 % CNN size based on alexnet layers
@@ -23,34 +28,46 @@ WL                                          =   2;
 
 % total number of PEs (J^2)
 % J2                                          =   256;
-% total storage area [um^2]
-% A                                           =   4400000; % 256 * 0.5KB RF + 128KB Buff
 % register file size per PE [byte]
 % G_byte                                      =   512;
 % buffe size [byte]
-% Q_byte                                      =   buffer_size(A, J2, G_byte);
+% Q_byte                                      =   J2 * G_byte; % just to let buffer size = aggregated RF size
+% total storage area [um^2]
+% A                                           =   get_total_storage_area(J2, Q_byte, G_byte);
 
 %% other parameters ------------------------------------------------------------
 
 % number of trials to run optimization in order to avoid local minimal
-num_trials                                  =   1;
+num_trials                                  =   30;
+
+%% parallel computation setup --------------------------------------------------
+
+curr_parpool = gcp('nocreate');
+if isempty(curr_parpool) && enable_multicores
+    parpool('local');
+end
 
 %% flows -----------------------------------------------------------------------
 
 % row stationary:           register file size = ( pqR+qR+p ) * WL
-% [access, reuse, params]                     =   rs_flow       (N, C, M, H, R, E, U, alpha, J2, Q_byte, G_byte, WL, num_trials);
+% [access, reuse, params, thruput]            =   rs_flow       (N, C, M, H, R, E, U, alpha, J2, Q_byte, G_byte, WL, num_trials);
+% energy_cost                                 =   get_energy_cost(access);
 
 % no local reuse:           register file size = 0
-% [access, reuse, params]                     =   nlr_flow      (N, C, M, H, R, E, U, alpha, J2, Q_byte, G_byte, WL, num_trials);
+% [access, reuse, params, thruput]            =   nlr_flow      (N, C, M, H, R, E, U, alpha, J2, Q_byte, G_byte, WL, num_trials);
+% energy_cost                                 =   get_energy_cost(access);
 
 % output stationary (IBM):  register file size = 1 * WL
-% [access, reuse, params]                     =   os_isb_flow   (N, C, M, H, R, E, U, alpha, J2, Q_byte, G_byte, WL, num_trials);
+% [access, reuse, params, thruput]            =   os_isb_flow   (N, C, M, H, R, E, U, alpha, J2, Q_byte, G_byte, WL, num_trials);
+% energy_cost                                 =   get_energy_cost(access);
 
 % output stationary (SDN):  register file size = (U+RU) * WL
-% [access, reuse, params]                     =   os_sdn_flow   (N, C, M, H, R, E, U, alpha, J2, Q_byte, G_byte, WL, num_trials);
+% [access, reuse, params, thruput]            =   os_sdn_flow   (N, C, M, H, R, E, U, alpha, J2, Q_byte, G_byte, WL, num_trials);
+% energy_cost                                 =   get_energy_cost(access);
 
 % weight stationary:        register file size = ( q+1 ) * WL
-% [access, reuse, params]                     =   ws_flow       (N, C, M, H, R, E, U, alpha, J2, Q_byte, G_byte, WL, num_trials);
+% [access, reuse, params, thruput]            =   ws_flow       (N, C, M, H, R, E, U, alpha, J2, Q_byte, G_byte, WL, num_trials);
+% energy_cost                                 =   get_energy_cost(access);
 
 % SIMD/SIMT
 
@@ -131,81 +148,46 @@ num_trials                                  =   1;
 
 %% test 4 ----------------------------------------------------------------------
 
-% % comparing all flows
-% 
-% energy_bar_graph_array                      =   zeros(1, 5);
-% 
-% % row stationary
-% G_byte                                      =   256 * WL; 
-% Q_byte                                      =   buffer_size(A, J2, G_byte);
-% [access, reuse, params]                     =   row_stationary_flow(N, C, M, H, R, E, U, alpha, J2, Q_byte, G_byte, WL, num_trials); 
-% energy_bar_graph_array(1)                   =   energy_cost(access);
-% % channel reuse
-% G_byte                                      =   0; 
-% Q_byte                                      =   buffer_size(A, J2, G_byte);
-% [access, reuse, params]                     =   channel_reuse_flow(N, C, M, H, R, E, U, alpha, J2, Q_byte, G_byte, WL, num_trials);
-% energy_bar_graph_array(2)                   =   energy_cost(access);
-% % output stationary (ibm)
-% G_byte                                      =   1 * WL; 
-% Q_byte                                      =   buffer_size(A, J2, G_byte);
-% [access, reuse, params]                     =   output_stationary_ibm_flow(N, C, M, H, R, E, U, alpha, J2, Q_byte, G_byte, WL, num_trials);
-% energy_bar_graph_array(3)                   =   energy_cost(access);
-% % output stationary (shidiannao)
-% G_byte                                      =   (U+R*U) * WL; 
-% Q_byte                                      =   buffer_size(A, J2, G_byte);
-% [access, reuse, params]                     =   output_stationary_shidiannao_flow(N, C, M, H, R, E, U, alpha, J2, Q_byte, G_byte, WL, num_trials);
-% energy_bar_graph_array(4)                   =   energy_cost(access);
-% % weight stationary
-% G_byte                                      =   128 * WL; 
-% Q_byte                                      =   buffer_size(A, J2, G_byte);
-% [access, reuse, params]                     =   weight_stationary_flow(N, C, M, H, R, E, U, alpha, J2, Q_byte, G_byte, WL, num_trials);
-% energy_bar_graph_array(5)                   =   energy_cost(access);
-% 
-% fig4 = figure();
+% comparing all flows
+J2                                          =   256;%[64 128 256 512];
+N                                           =   128;%[1 16 64 128];
+alexnet_layer_id                            =   5;%[1 2 3 4 5];
+G_byte_default                              =   512;
+
+if enable_multicores
+    total_num_threads                       =   length(J2) * length(N) * length(alexnet_layer_id);
+    % results cell
+    results                                 =   cell(1, total_num_threads);
+    fprintf('\n\n');    
+    parfor par_th= 1:total_num_threads
+        k                                   =   floor( (par_th-1)/(length(J2) * length(N)) ) + 1;
+        j                                   =   floor( ((par_th - (k-1)*length(J2)*length(N))-1)/length(J2) ) + 1;
+        i                                   =   par_th - (k-1)*length(J2)*length(N) - (j-1)*length(J2);
+        fprintf('  Thread #%d (%d, %d, %d) Running... <J2 = %d, N = %d, AlexNet Layer ID = %d>\n', par_th, i, j, k, J2(i), N(j), alexnet_layer_id(k));
+        
+        A                                   =   get_total_storage_area(J2(i), J2(i)*G_byte_default, G_byte_default);
+        results{par_th}                     =   flow_energy_comparison(J2(i), A, N(j), alexnet_layer_id(k), WL, num_trials);
+    end
+    results                                 =   reshape(results, [length(J2) length(N) length(alexnet_layer_id)]);
+else
+    % results cell
+    results                                 =   cell(length(J2), length(N), length(alexnet_layer_id));
+    for i = 1:length(J2)
+        A                                   =   get_total_storage_area(J2(i), J2(i)*G_byte_default, G_byte_default);
+        for j = 1:length(N)
+            for k = 1:length(alexnet_layer_id)
+                results{i, j, k}            =   flow_energy_comparison(J2(i), A, N(j), alexnet_layer_id(k), WL, num_trials);
+            end
+        end
+    end
+end
+
+save('results/flow_energy_comparison_results', 'results');
+
+% fig4    = figure();
 % axes4   = axes('Parent', fig4, 'XTickLabel',{'RS', 'UCLA', 'IBM', 'SDN', 'WS'}, 'FontSize', 20);
-% hold on;
-% grid on;
-% bar(energy_bar_graph_array');
-% % xlabel('Register File Size (byte)', 'fontsize', 20);
-% ylabel('Normalized Energy', 'fontsize', 20);
-% axis tight;
-
-%% test 5 ----------------------------------------------------------------------
-
-% % sweeping batch size for weight stationary
-% 
-% % batch size
-% N_sweep                                     =   [1 2 4 8 16 32 64 128];
-% % register file size [in bytes]
-% G_byte                                      =   128 .* WL;
-% % buffer size [in bytes]
-% Q_byte                                      =   buffer_size(A, J2, G_byte);
-% % result arrays
-% stat.weight_stationary.batch_size_sweep     =   cell(size(N_sweep));
-% energy_bar_graph_array                      =   zeros(1, length(N_sweep));
-% % run flow optimization
-% for i = 1:length(N_sweep)
-%     % flow optimization
-%     [access, reuse, params]                                 =   weight_stationary_flow(N_sweep(i), C, M, H, R, E, U, alpha, J2, Q_byte, G_byte, WL, num_trials);
-%     % collect result
-%     params.G_byte                                           =   G_byte;
-%     params.Q_byte                                           =   Q_byte;
-%     params.total_storage_byte                               =   G_byte * J2 + Q_byte;
-%     params.J2                                               =   J2;
-%     params.A                                                =   A;
-%     stat.weight_stationary.batch_size_sweep{i}.reuse        =   reuse;
-%     stat.weight_stationary.batch_size_sweep{i}.access       =   access;
-%     stat.weight_stationary.batch_size_sweep{i}.params       =   params;
-%     % calculate energy
-%     energy_bar_graph_array(i)                               =   energy_cost(stat.weight_stationary.batch_size_sweep{i}.access);
-% end
-% 
-% fig5 = figure();
-% axes5   = axes('Parent', fig5, 'FontSize', 20);
-% hold on;
-% grid on;
-% bar(N_sweep, energy_bar_graph_array);
-% xlabel('Batch Size', 'fontsize', 20);
+% hold on; grid on;
+% bar(results{1, 1, 1}.energy);
 % ylabel('Normalized Energy', 'fontsize', 20);
 % axis tight;
 

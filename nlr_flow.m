@@ -1,4 +1,4 @@
-function    [access, reuse, params] = nlr_flow(N, C, M, H, R, E, U, alpha, J2, Q_byte, ~, WL, num_trials)
+function    [access, reuse, params, thruput] = nlr_flow(N, C, M, H, R, E, U, alpha, J2, Q_byte, ~, WL, num_trials)
    
 %% num data --------------------------------------------------------------------
 
@@ -45,7 +45,7 @@ for i = 1:num_trials
                                     [], [], ...                 % linear inequality constraints
                                     [], [], ...                 % blank
                                     [1; 1; 1], ...              % lower bound of x
-                                    [N; M; E], ...              % upper bound of x
+                                    [N; min([M J2]); E], ...    % upper bound of x
                                     buffer_size_constraint, ... % non-linear constraints
                                     [1 2 3], ...                % integer constraints
                                     ga_opts ...                 % ga options
@@ -103,6 +103,10 @@ access.array.wiring         =   num_ifmap_values * M * R^2 * alpha^2            
                                 num_ofmap_values * ( C*R^2 - ceil(C/q)*R^2 );
 access.reg.reads            =   0;
 access.reg.writes           =   0;
+
+% thruput
+thruput.active_pes          =   p*q;
+thruput.active_pe_percent   =   thruput.active_pes/J2;
 
 end
 

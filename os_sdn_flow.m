@@ -1,4 +1,4 @@
-function    [access, reuse, params] = os_sdn_flow(N, C, M, H, R, E, U, alpha, J2, Q_byte, ~, WL, num_trials)
+function    [access, reuse, params, thruput] = os_sdn_flow(N, C, M, H, R, E, U, alpha, J2, Q_byte, ~, WL, num_trials)
 
 %% num data --------------------------------------------------------------------
 
@@ -108,5 +108,9 @@ access.array.wiring         =   num_ifmap_values * M * alpha^2 * R^2            
                                 num_weights * N * E^2;
 access.reg.reads            =   num_ofmap_values * ( C*R^2 - 1 );
 access.reg.writes           =   num_ofmap_values * ( C*R^2 - 1 );
+
+% thruput
+thruput.active_pes          =   l^2;
+thruput.active_pe_percent   =   thruput.active_pes/J2;
 
 end

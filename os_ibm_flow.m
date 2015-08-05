@@ -1,4 +1,4 @@
-function    [access, reuse, params] = os_ibm_flow(N, C, M, H, R, E, ~, alpha, J2, Q_byte, ~, WL, num_trials)
+function    [access, reuse, params, thruput] = os_ibm_flow(N, C, M, H, R, E, ~, alpha, J2, Q_byte, ~, WL, num_trials)
 
 %% num data --------------------------------------------------------------------
 
@@ -142,5 +142,9 @@ access.array.wiring         =   num_ifmap_values * M * R^2 * alpha^2 + ...
                                 num_weights * N * E^2;
 access.reg.reads            =   num_ofmap_values * ( C*R^2 - 1 );
 access.reg.writes           =   num_ofmap_values * ( C*R^2 - 1 );
+
+% thruput
+thruput.active_pes          =   p*b*l^2;
+thruput.active_pe_percent   =   thruput.active_pes/J2;
 
 end

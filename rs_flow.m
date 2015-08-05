@@ -1,4 +1,4 @@
-function    [access, reuse, params] = rs_flow(N, C, M, H, R, E, U, alpha, J2, Q_byte, G_byte, WL, num_trials)
+function    [access, reuse, params, thruput] = rs_flow(N, C, M, H, R, E, U, alpha, J2, Q_byte, G_byte, WL, num_trials)
 
 %% num data --------------------------------------------------------------------
 
@@ -159,5 +159,9 @@ access.reg.reads            =   num_ifmap_values    * M*R^2*alpha^2 + ...
                                 num_weights         * N*E^2         + ...
                                 num_ofmap_values    * ( C*R^2 - ceil(C/q)*R );
 access.reg.writes           =   num_ofmap_values    * ( C*R^2 - ceil(C/q)*R );
+
+% thruput
+thruput.active_pes          =   R*e*r*t;
+thruput.active_pe_percent   =   thruput.active_pes/J2;
 
 end
