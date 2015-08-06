@@ -32,7 +32,7 @@ buffer_size_constraint      =   @(x) ...
 num_mem_reads_func          =   @(x) ... % num_weights * ceil(N/n)ceil(E/e) + num_inputs * ceil(M/m)*(alpha/beta), beta = e/h
                                 ( ...
                                     num_weights * ceil(E/x(4)) * ceil(N/x(2)) + ...
-                                    num_ifmap_values * ceil(M/x(1)) * (alpha / (x(4)/(U*x(4)+R-U))) ...
+                                    num_ifmap_values * ceil(M/x(1)) * ( alpha / (x(4)/(U*x(4)+R-U)) ) ...
                                 );
 
 num_mem_reads               =   Inf;
@@ -55,6 +55,10 @@ for i = 1:num_trials
     if curr_mem_reads < num_mem_reads
         num_mem_reads       =   curr_mem_reads;
         x                   =   curr_x;
+    elseif curr_mem_reads == num_mem_reads
+        if prod(curr_x) > prod(x)
+            x               =   curr_x;
+        end
     end
 end
                                 
@@ -102,6 +106,10 @@ for i = 1:num_trials
     if curr_buff_acc < num_buff_acc
         num_buff_acc        =   curr_buff_acc;
         x                   =   curr_x;
+    elseif curr_buff_acc == num_buff_acc
+        if prod(curr_x) > prod(x)
+            x               =   curr_x;
+        end
     end
 end
                             

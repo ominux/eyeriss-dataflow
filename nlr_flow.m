@@ -53,6 +53,11 @@ for i = 1:num_trials
     if curr_mem_reads < num_mem_reads
         num_mem_reads       =   curr_mem_reads;
         x                   =   curr_x;
+    elseif curr_mem_reads == num_mem_reads
+        if prod(curr_x) > prod(x)
+            num_mem_reads   =   curr_mem_reads;
+            x               =   curr_x;
+        end
     end
 end
 
