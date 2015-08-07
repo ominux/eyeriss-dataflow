@@ -1,10 +1,10 @@
-function [results, energy_bar_plot_array] = rs_flow_reg_sweep(J2, A, N, alexnet_layer_id, WL, G_byte_sweep, num_trials)
+function [results, energy_cost_array] = rs_flow_reg_sweep(J2, A, N, alexnet_layer_id, WL, G_byte_sweep, num_trials)
 
     [H, R, U, C, M, E, alpha]                   =   get_alexnet_params(alexnet_layer_id);
     
     % result arrays
     results                                     =   cell(size(G_byte_sweep));
-    energy_bar_plot_array                       =   zeros(1, length(G_byte_sweep));
+    energy_cost_array                           =   zeros(1, length(G_byte_sweep));
     
     % run flow optimization
     for i = 1:length(G_byte_sweep)
@@ -22,6 +22,6 @@ function [results, energy_bar_plot_array] = rs_flow_reg_sweep(J2, A, N, alexnet_
         results{i}.params                       =   params;
         results{i}.thruput                      =   thruput;
         results{i}.energy_cost                  =   get_energy_cost(access);
-        energy_bar_plot_array(i)                =   results{i}.energy_cost;
+        energy_cost_array(i)                    =   results{i}.energy_cost;
     end
 end

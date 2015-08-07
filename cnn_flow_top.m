@@ -3,7 +3,7 @@ close all; clear; clc;
 %% problem size parameters -----------------------------------------------------
 
 % batch_size
-N                                           =   16;
+N                                           =   64;
 % CNN size based on alexnet layers
 %   H: input fmap size (width = height)
 %   R: filter size (width = height)
@@ -14,7 +14,7 @@ N                                           =   16;
 %   alpha: E/H
 %
 % choose the layer in AlexNet to run the tests
-alexnet_layer_id                            =   3;
+alexnet_layer_id                            =   5;
 [H, R, U, C, M, E, alpha]                   =   get_alexnet_params(alexnet_layer_id);
 
 % word length [in bytes]
@@ -23,7 +23,7 @@ WL                                          =   2;
 %% architecture parameters -----------------------------------------------------
 
 % total number of PEs (J^2)
-J2                                          =   256;
+J2                                          =   1024;
 % total storage area [um^2]
 G_byte_default                              =   512;
 A                                           =   get_total_storage_area(J2, J2 * G_byte_default, G_byte_default);
@@ -34,7 +34,7 @@ flow                                        =   'rs';
 %% other parameters ------------------------------------------------------------
 
 % number of trials to run optimization in order to avoid local minimal
-num_trials                                  =   1;
+num_trials                                  =   5;
 
 %% flows -----------------------------------------------------------------------
 
