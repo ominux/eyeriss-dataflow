@@ -52,7 +52,7 @@ parfor par_th = 1:num_threads
     j                                       =   floor((par_th-1)/length(J2)) + 1;
     i                                       =   par_th - (j-1)*length(J2);
     
-    fprintf('  Thread #%d (J2 = %d, AlexNet Layer ID = %d): ', par_th, J2(i), alexnet_layer_id(j));
+    fprintf('  Thread #%d (J2 = %d, AlexNet Layer ID = %d) \n', par_th, J2(i), alexnet_layer_id(j));
     
     % get alexnet parameters 
     [H, R, U, C, M, E, alpha]               =   get_alexnet_params(alexnet_layer_id(j));
@@ -68,8 +68,6 @@ parfor par_th = 1:num_threads
         
         [curr_total_E, energy_cost]         =   get_energy_cost(access);
         
-        fprintf('(k = %d): <%e,%d> ', k, curr_total_E, thruput.active_pes);
-        
         if ( curr_total_E < (total_E*0.95) ) || (curr_total_E < total_E && thruput.active_pes > thruput_array(par_th))
             total_E                         =   curr_total_E;
             params.G_byte                   =   G_byte(k);
@@ -83,8 +81,6 @@ parfor par_th = 1:num_threads
         end
     end
     energy_cost_array(par_th)               =   total_E;
-    
-    fprintf('\n');
     
 end
 
@@ -107,7 +103,7 @@ axis tight;
 fig2 = figure();
 hold on;
 grid on;
-plot(1./thruput_array(:, 1), energy_cost_array(:, 1), 'o-m');
+plot(1./thruput_array(:, 2), energy_cost_array(:, 2), 'o-m');
 xlabel('1/Throughput', 'fontsize', 20);
 ylabel('Normalized Energy', 'fontsize', 20);
 axis tight;

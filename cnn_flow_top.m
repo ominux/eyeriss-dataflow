@@ -3,7 +3,7 @@ close all; clear; clc;
 %% problem size parameters -----------------------------------------------------
 
 % batch_size
-N                                           =   64;
+N                                           =   16;
 % CNN size based on alexnet layers
 %   H: input fmap size (width = height)
 %   R: filter size (width = height)
@@ -14,7 +14,7 @@ N                                           =   64;
 %   alpha: E/H
 %
 % choose the layer in AlexNet to run the tests
-alexnet_layer_id                            =   5;
+alexnet_layer_id                            =   1;
 [H, R, U, C, M, E, alpha]                   =   get_alexnet_params(alexnet_layer_id);
 
 % word length [in bytes]
@@ -23,18 +23,29 @@ WL                                          =   2;
 %% architecture parameters -----------------------------------------------------
 
 % total number of PEs (J^2)
-J2                                          =   1024;
-% total storage area [um^2]
-G_byte_default                              =   512;
-A                                           =   get_total_storage_area(J2, J2 * G_byte_default, G_byte_default);
-
+J2                                          =   256;
 % choose flow: 'rs', 'nlr', 'os_ibm', 'os_sdn', 'ws'
 flow                                        =   'rs';
 
+%% default area ----------------------------------------------------------------
+
+% default number of PEs
+J2_default                                  =   256;
+% RF size for default area
+G_byte_default                              =   512;
+% buffer size for default area
+Q_byte_default                              =   J2_default * G_byte_default;
+% total area (processing + storge) [um^2]
+B                                           =   J2_default * get_pe_area() + ...
+                                                J2_default * get_storage_area_from_size(G_byte_default) + ...
+                                                get_storage_area_from_size(Q_byte_default);
+% total storage area (buff + RF) [um^2]
+A                                           =   B - J2 * get_pe_area();
+                                            
 %% other parameters ------------------------------------------------------------
 
 % number of trials to run optimization in order to avoid local minimal
-num_trials                                  =   5;
+num_trials                                  =   3;
 
 %% flows -----------------------------------------------------------------------
 
@@ -44,9 +55,10 @@ num_trials                                  =   5;
 if      ( strcmp(flow,'rs') )
     % row stationary:           register file size = ( pqR+qR+p ) * WL
     G_byte                                      =   256 * WL; 
+%     G_byte                                      =   1024;
     Q_byte                                      =   get_buffer_size(A, J2, G_byte);
     [access, reuse, params, thruput]            =   rs_flow       (N, C, M, H, R, E, U, alpha, J2, Q_byte, G_byte, WL, num_trials);
-    [~, energy_cost]                            =   get_energy_cost(access);
+    [total_energy_cost, item_energy_cost]       =   get_energy_cost(access);
 elseif  ( strcmp(flow,'nlr') )
     % no local reuse:           register file size = 0
     G_byte                                      =   0 * WL; 
