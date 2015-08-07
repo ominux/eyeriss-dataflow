@@ -52,10 +52,10 @@ for i = 1:num_trials
                                     [1 2 3 4], ...              % integer constraints
                                     ga_opts ...                 % ga options
                                 );
-    if curr_mem_reads < num_mem_reads
+    if curr_mem_reads <= num_mem_reads * 0.95
         num_mem_reads       =   curr_mem_reads;
         x                   =   curr_x;
-    elseif curr_mem_reads == num_mem_reads
+    elseif curr_mem_reads <= num_mem_reads
         if prod(curr_x) > prod(x)
             x               =   curr_x;
         end
