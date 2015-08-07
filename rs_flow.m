@@ -93,15 +93,15 @@ for i = 1:num_trials
     [curr_x, curr_buff_acc, ~]  = ...
                                 ga ...
                                 ( ...
-                                    num_buff_acc_func, ...          % minimization target
-                                    3, ...                          % number variables in x
-                                    [], [], ...                     % linear inequality constraints
-                                    [], [], ...                     % blank
-                                    [1; 1; 1], ...                  % lower bound of x
-                                    [m; k; floor(J2/R/e)], ...      % upper bound of x
-                                    register_size_constraint, ...   % non-linear constraints
-                                    [1 2 3], ...                    % integer constraints
-                                    ga_opts ...                     % ga options
+                                    num_buff_acc_func, ...              % minimization target
+                                    3, ...                              % number variables in x
+                                    [], [], ...                         % linear inequality constraints
+                                    [], [], ...                         % blank
+                                    [1; 1; 1], ...                      % lower bound of x
+                                    [m; k; min([floor(J2/R/e) k])], ... % upper bound of x
+                                    register_size_constraint, ...       % non-linear constraints
+                                    [1 2 3], ...                        % integer constraints
+                                    ga_opts ...                         % ga options
                                 );
     if curr_buff_acc < num_buff_acc
         num_buff_acc        =   curr_buff_acc;

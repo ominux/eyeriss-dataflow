@@ -14,7 +14,7 @@ N                                           =   16;
 %   alpha: E/H
 %
 % choose the layer in AlexNet to run the tests
-alexnet_layer_id                            =   2;
+alexnet_layer_id                            =   3;
 [H, R, U, C, M, E, alpha]                   =   get_alexnet_params(alexnet_layer_id);
 
 % word length [in bytes]
@@ -29,12 +29,12 @@ G_byte_default                              =   512;
 A                                           =   get_total_storage_area(J2, J2 * G_byte_default, G_byte_default);
 
 % choose flow: 'rs', 'nlr', 'os_ibm', 'os_sdn', 'ws'
-flow                                        =   'ws';
+flow                                        =   'rs';
 
 %% other parameters ------------------------------------------------------------
 
 % number of trials to run optimization in order to avoid local minimal
-num_trials                                  =   50;
+num_trials                                  =   1;
 
 %% flows -----------------------------------------------------------------------
 
