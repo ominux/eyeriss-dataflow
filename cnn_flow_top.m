@@ -3,7 +3,7 @@ close all; clear; clc;
 %% problem size parameters -----------------------------------------------------
 
 % batch_size
-N                                           =   16;
+N                                           =   64;
 % CNN size based on alexnet layers
 %   H: input fmap size (width = height)
 %   R: filter size (width = height)
@@ -14,7 +14,7 @@ N                                           =   16;
 %   alpha: E/H
 %
 % choose the layer in AlexNet to run the tests
-alexnet_layer_id                            =   1;
+alexnet_layer_id                            =   5;
 [H, R, U, C, M, E, alpha]                   =   get_alexnet_params(alexnet_layer_id);
 
 % word length [in bytes]
@@ -25,7 +25,7 @@ WL                                          =   2;
 % total number of PEs (J^2)
 J2                                          =   256;
 % choose flow: 'rs', 'nlr', 'os_ibm', 'os_sdn', 'ws'
-flow                                        =   'rs';
+flow                                        =   'ws';
 
 %% default area ----------------------------------------------------------------
 
@@ -117,50 +117,5 @@ end
 % bar(G_byte, total_storage_byte/1024);
 % xlabel('Register File Size (byte)', 'fontsize', 20);
 % ylabel('Total On-Chip Storage Size (KB)', 'fontsize', 20);
-% axis tight;
-
-%% test 2 ----------------------------------------------------------------------
-
-% Finding the best reg file size for row stationary flow under constant area
-
-% % parameter setup
-% J2                                          =   256;
-% A                                           =   4400000;
-% N                                           =   1;
-% alexnet_layer_id                            =   2;
-% G_byte_sweep                                =   64:64:1024;
-% % run sweep
-% [results, energy_cost_array]                =   rs_flow_reg_sweep(J2, A, N, alexnet_layer_id, WL, G_byte_sweep, num_trials);
-% 
-% fig2 = figure();
-% axes2   = axes('Parent', fig2, 'FontSize', 20);
-% hold on;
-% grid on;
-% bar(G_byte_sweep, energy_cost_array);
-% xlabel('Register File Size (byte)', 'fontsize', 20);
-% ylabel('Normalized Energy', 'fontsize', 20);
-% axis tight;
-
-%% test 3 ----------------------------------------------------------------------
-
-% Finding the best reg file size for weight stationary flow under constant area
-
-% % parameter setup
-% J2                                          =   512;
-% G_byte_default                              =   512;
-% A                                           =   get_total_storage_area(J2, J2 * G_byte_default, G_byte_default);
-% N                                           =   128;
-% alexnet_layer_id                            =   5;
-% G_byte_sweep                                =   64:64:1024;
-% % run sweep
-% [results, energy_cost_array]                =   ws_flow_reg_sweep(J2, A, N, alexnet_layer_id, WL, G_byte_sweep, num_trials);
-% 
-% fig2 = figure();
-% axes2   = axes('Parent', fig2, 'FontSize', 20);
-% hold on;
-% grid on;
-% bar(G_byte_sweep, energy_cost_array);
-% xlabel('Register File Size (byte)', 'fontsize', 20);
-% ylabel('Normalized Energy', 'fontsize', 20);
 % axis tight;
 
