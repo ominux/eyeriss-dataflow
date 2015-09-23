@@ -3,7 +3,7 @@ close all; clear; clc;
 %% parallel computation setup --------------------------------------------------
 
 % enable the use of multicores
-enable_multicores                           =   1;
+enable_multicores                               =   1;
 
 curr_parpool = gcp('nocreate');
 if isempty(curr_parpool) && enable_multicores
@@ -13,37 +13,37 @@ end
 %% parameter setup -------------------------------------------------------------
 
 % number of PEs
-J2                                          =   256;
+J2                                              =   256;
 % choose a flow: 'rs', 'ws'
-flow                                        =   'rs';
+flow                                            =   'rs';
 
 % word length [in bytes]
-WL                                          =   2;
+WL                                              =   2;
 % batch size
-N                                           =   128;
+N                                               =   16;
 % AlexNet layer ID
-alexnet_layer_id                            =   5;
+alexnet_layer_id                                =   2;
 % get alexnet parameters 
-[H, R, U, C, M, E, alpha]                   =   get_alexnet_params(alexnet_layer_id);
+[H, R, U, C, M, E, alpha]                       =   get_alexnet_params(alexnet_layer_id);
 
 % ====== RF size sweep range ======
-G_byte                                      =   64:64:1024;
+G_byte                                          =   32:32:512;
 
 % number of trials to run optimization in order to avoid local minimal
-num_trials                                  =   5;
+num_trials                                      =   5;
 
 %% default area ----------------------------------------------------------------
 
 % RF size for default storage area
-G_byte_default                              =   512;
+G_byte_default                                  =   512;
 % default storage area
-A                                           =   get_total_storage_area(J2, J2 * G_byte_default, G_byte_default);
+A                                               =   get_total_storage_area(J2, J2 * G_byte_default, G_byte_default);
 
 %% run flow --------------------------------------------------------------------
 
 % result arrays
-results                                     =   cell(size(G_byte));
-energy_cost_array                           =   zeros(1, length(G_byte));
+results                                         =   cell(size(G_byte));
+energy_cost_array                               =   zeros(1, length(G_byte));
     
 % run flow optimization
 if enable_multicores == 1
@@ -69,9 +69,9 @@ else
     for j = 1:length(G_byte)
         Q_byte                                  =   get_buffer_size(A, J2, G_byte(j));
         if      (strcmp(flow, 'rs') )
-            [access, reuse, params, thruput]        =   rs_flow(N, C, M, H, R, E, U, alpha, J2, Q_byte, G_byte(j), WL, num_trials);
+            [access, reuse, params, thruput]    =   rs_flow(N, C, M, H, R, E, U, alpha, J2, Q_byte, G_byte(j), WL, num_trials);
         elseif  (strcmp(flow, 'ws') )
-            [access, reuse, params, thruput]        =   ws_flow(N, C, M, H, R, E, U, alpha, J2, Q_byte, G_byte(j), WL, num_trials);
+            [access, reuse, params, thruput]    =   ws_flow(N, C, M, H, R, E, U, alpha, J2, Q_byte, G_byte(j), WL, num_trials);
         end
         % collect result
         params.J2                               =   J2;
