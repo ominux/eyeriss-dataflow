@@ -36,8 +36,26 @@ function [H, R, U, C, M, E, alpha] = get_alexnet_params(layer_id)
         U                           =   1;
         C                           =   192;
         M                           =   128;
+    elseif  layer_id == 6
+        H                           =   6;
+        R                           =   6;
+        U                           =   1;
+        C                           =   256;
+        M                           =   4096;
+    elseif  layer_id == 7
+        H                           =   1;
+        R                           =   1;
+        U                           =   1;
+        C                           =   4096;
+        M                           =   4096;
+    elseif  layer_id == 8
+        H                           =   1;
+        R                           =   1;
+        U                           =   1;
+        C                           =   4096;
+        M                           =   1000;
     else
-        error('Incorrect layer ID. Valid range: [1 5].');
+        error('Incorrect layer ID. Valid range: [1 8].');
     end
 
     % output fmap size (width = height)

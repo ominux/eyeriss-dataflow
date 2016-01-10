@@ -15,11 +15,11 @@ end
 % word length [in bytes]
 WL                                          =   2;
 % number of PEs
-J2                                          =   [256 512];      % [128 256 512 1024];
+J2                                          =   [256 512 1024]; % [128 256 512 1024];
 % batch size
-N                                           =   64;             % [1 16 64 128];
+N                                           =   [1 16 64];      % [1 16 64 128];
 % layer ID of AlexNet
-alexnet_layer_id                            =   [1 2 3 4 5];    % [1 2 3 4 5];
+alexnet_layer_id                            =   [6 7 8];        % alexnet: 1-8;
 % RF size for default area
 G_byte_default                              =   512;
 % times to run optimization to avoid local minima
@@ -55,7 +55,7 @@ else
     end
 end
 
-save('results/test_flow_comparison_results_256_512', 'results');
+save('results/test_flow_comparison_results_alexnet_fc_layers_256_512_1024', 'results');
 
 % fig4    = figure();
 % axes4   = axes('Parent', fig4, 'XTickLabel',{'RS', 'UCLA', 'IBM', 'SDN', 'WS'}, 'FontSize', 20);

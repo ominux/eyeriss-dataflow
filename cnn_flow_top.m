@@ -14,7 +14,7 @@ N                                           =   64;
 %   alpha: E/H
 %
 % choose the layer in AlexNet to run the tests
-alexnet_layer_id                            =   5;
+alexnet_layer_id                            =   1;
 [H, R, U, C, M, E, alpha]                   =   get_alexnet_params(alexnet_layer_id);
 
 % word length [in bytes]
@@ -25,7 +25,7 @@ WL                                          =   2;
 % total number of PEs (J^2)
 J2                                          =   256;
 % choose flow: 'rs', 'nlr', 'os_ibm', 'os_sdn', 'ws'
-flow                                        =   'ws';
+flow                                        =   'rs';
 
 %% default area ----------------------------------------------------------------
 
@@ -45,7 +45,7 @@ A                                           =   B - J2 * get_pe_area();
 %% other parameters ------------------------------------------------------------
 
 % number of trials to run optimization in order to avoid local minimal
-num_trials                                  =   3;
+num_trials                                  =   100;
 
 %% flows -----------------------------------------------------------------------
 
@@ -55,10 +55,9 @@ num_trials                                  =   3;
 if      ( strcmp(flow,'rs') )
     % row stationary:           register file size = ( pqR+qR+p ) * WL
     G_byte                                      =   256 * WL; 
-%     G_byte                                      =   1024;
     Q_byte                                      =   get_buffer_size(A, J2, G_byte);
     [access, reuse, params, thruput]            =   rs_flow       (N, C, M, H, R, E, U, alpha, J2, Q_byte, G_byte, WL, num_trials);
-    [total_energy_cost, item_energy_cost]       =   get_energy_cost(access);
+    [~, energy_cost]                            =   get_energy_cost(access);
 elseif  ( strcmp(flow,'nlr') )
     % no local reuse:           register file size = 0
     G_byte                                      =   0 * WL; 

@@ -70,6 +70,15 @@ e                           =   x(4);
 h                           =   U*e + R - U;
 beta                        =   e/h;
 
+% hack begins
+% m = 64;
+% n = 4;
+% k = 6;
+% e = 13;
+% h = U*e + R - U;
+% beta =   e/h;
+% hack ends
+
 %% buffer level accesses optimization ------------------------------------------
 
 % x = [p q r]
@@ -118,6 +127,13 @@ p                           =   x(1);
 q                           =   x(2);
 r                           =   x(3);
 t                           =   min([floor(J2/R/e/r) ceil(m/p)]);
+
+% % hack begins
+% p                           =   16;
+% q                           =   3;
+% r                           =   2;
+% t                           =   2;
+% hack ends
 
 %% output ----------------------------------------------------------------------
 
