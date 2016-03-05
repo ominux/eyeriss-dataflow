@@ -1,20 +1,20 @@
-function    [access, reuse, params, thruput] = rs_flow(N, C, M, H, R, E, U, alpha, J2, Q_byte, G_byte, WL, num_trials)
+function    [access, reuse, params, thruput] = rs_flow(G, N, C, M, H, R, E, U, alpha, J2, Q_byte, RF_byte, WL, num_trials)
 
 %% num data --------------------------------------------------------------------
 
 % total number ifmap values
-num_ifmap_values            =   N * C * H^2;
+num_ifmap_values            =   G * N * C * H^2;
 % total number weights
-num_weights                 =   M * C * R^2;
+num_weights                 =   G * M * C * R^2;
 % total number ofmap values
-num_ofmap_values            =   N * M * E^2;
+num_ofmap_values            =   G * N * M * E^2;
 
 %% memory size -----------------------------------------------------------------
 
 % buffer size [in words]
 Q                           =   floor(Q_byte / WL);
 % register size [in words]
-G                           =   floor(G_byte / WL);
+RF                          =   floor(RF_byte / WL);
 
 %% memory level accesses optimization ------------------------------------------
 
@@ -71,10 +71,10 @@ h                           =   U*e + R - U;
 beta                        =   e/h;
 
 % hack begins
-% m = 64;
-% n = 4;
-% k = 6;
-% e = 13;
+% m = 96;
+% n = 1;
+% e = 7;
+% k = 1;
 % h = U*e + R - U;
 % beta =   e/h;
 % hack ends
@@ -85,7 +85,7 @@ beta                        =   e/h;
 register_size_constraint    =   @(x) ...
                                 deal ...
                                 ( ... pqR + qR + p - G
-                                    ( x(1)*x(2)*R + x(2)*R + x(1) - G ), ...
+                                    ( x(1)*x(2)*R + x(2)*R + x(1) - RF ), ...
                                     [] ...
                                 );
 
@@ -130,8 +130,8 @@ t                           =   min([floor(J2/R/e/r) ceil(m/p)]);
 
 % % hack begins
 % p                           =   16;
-% q                           =   3;
-% r                           =   2;
+% q                           =   1;
+% r                           =   1;
 % t                           =   2;
 % hack ends
 
@@ -140,8 +140,8 @@ t                           =   min([floor(J2/R/e/r) ceil(m/p)]);
 % params
 params.m                    =   m;
 params.n                    =   n;
-params.k                    =   k;
 params.e                    =   e;
+params.k                    =   k;
 params.h                    =   h;
 params.beta                 =   beta;
 params.p                    =   p;
@@ -167,22 +167,37 @@ reuse.reg.ifmap             =   p*R*alpha;
 reuse.reg.weight            =   n*E;
 
 % access
-access.memory.reads         =   num_ifmap_values    * ceil(M/m) * (alpha/beta)  + ...
-                                num_weights         * ceil(N/n) * ceil(E/e);
-access.memory.writes        =   num_ofmap_values;
+access.memory.reads.ifmap   =   num_ifmap_values    * ceil(M/m) * (alpha/beta);
+access.memory.reads.weight  =   num_weights         * ceil(N/n) * ceil(E/e);
+access.memory.reads.ofmap   =   0;
+access.memory.reads.total   =   access.memory.reads.ifmap + access.memory.reads.weight + access.memory.reads.ofmap;
+access.memory.writes.ifmap  =   0;
+access.memory.writes.weight =   0;
+access.memory.writes.ofmap  =   num_ofmap_values;
+access.memory.writes.total  =   access.memory.writes.ifmap + access.memory.writes.weight + access.memory.writes.ofmap;
 
-access.buffer.reads         =   num_ifmap_values    * ceil(M/(p*t)) * (alpha/beta)   + ...
-                                num_ofmap_values    * ( ceil(C/(q*r)) - 1 );
-access.buffer.writes        =   num_ofmap_values    * ( ceil(C/(q*r)) - 1 );
+access.buffer.reads.ifmap   =   num_ifmap_values    * ceil(M/(p*t)) * (alpha/beta);
+access.buffer.reads.weight  =   0;
+access.buffer.reads.ofmap   =   num_ofmap_values    * ( ceil(C/(q*r)) - 1 );
+access.buffer.reads.total   =   access.buffer.reads.ifmap + access.buffer.reads.weight + access.buffer.reads.ofmap;
+access.buffer.writes.ifmap  =   0;
+access.buffer.writes.weight =   0;
+access.buffer.writes.ofmap  =   num_ofmap_values    * ( ceil(C/(q*r)) - 1 );
+access.buffer.writes.total  =   access.buffer.writes.ifmap + access.buffer.writes.weight + access.buffer.writes.ofmap;
 
-access.array.wiring         =   num_ifmap_values    * ceil(M/p) * R * alpha + ...
-                                num_weights         * ceil(N/n) * E         + ...
-                                num_ofmap_values    * ( ceil(C/q)*R - ceil(C/(q*r)) );
+access.array.wiring.ifmap   =   num_ifmap_values    * ceil(M/p) * R * alpha;
+access.array.wiring.weight  =   num_weights         * ceil(N/n) * E;
+access.array.wiring.ofmap   =   num_ofmap_values    * ( ceil(C/q)*R - ceil(C/(q*r)) );
+access.array.wiring.total   =   access.array.wiring.ifmap + access.array.wiring.weight + access.array.wiring.ofmap;
 
-access.reg.reads            =   num_ifmap_values    * M*R^2*alpha^2 + ...
-                                num_weights         * N*E^2         + ...
-                                num_ofmap_values    * ( C*R^2 - ceil(C/q)*R );
-access.reg.writes           =   num_ofmap_values    * ( C*R^2 - ceil(C/q)*R );
+access.reg.reads.ifmap      =   num_ifmap_values    * M*R^2*alpha^2;
+access.reg.reads.weight     =   num_weights         * N*E^2;
+access.reg.reads.ofmap      =   num_ofmap_values    * ( C*R^2 - ceil(C/q)*R );
+access.reg.reads.total      =   access.reg.reads.ifmap + access.reg.reads.weight + access.reg.reads.ofmap;
+access.reg.writes.ifmap     =   0;
+access.reg.writes.weight    =   0;
+access.reg.writes.ofmap     =   num_ofmap_values    * ( C*R^2 - ceil(C/q)*R );
+access.reg.writes.total     =   access.reg.writes.ifmap + access.reg.writes.weight + access.reg.writes.ofmap;
 
 % thruput
 thruput.active_pes          =   R*e*r*t;

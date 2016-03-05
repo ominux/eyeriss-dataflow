@@ -1,10 +1,15 @@
 close all; clear; clc; 
 
+%% setup project ---------------------------------------------------------------
+
+project_setup();
+
 %% problem size parameters -----------------------------------------------------
 
 % batch_size
-N                                           =   64;
-% CNN size based on alexnet layers
+N                                           =   4;
+% CNN size parameters
+%   G: number of groups
 %   H: input fmap size (width = height)
 %   R: filter size (width = height)
 %   U: stride size
@@ -13,9 +18,10 @@ N                                           =   64;
 %   E: output fmap size (width = height)
 %   alpha: E/H
 %
-% choose the layer in AlexNet to run the tests
+% choose a layer in the CNN model to run the tests
+% available models: alexnet, vgg16
 alexnet_layer_id                            =   1;
-[H, R, U, C, M, E, alpha]                   =   get_alexnet_params(alexnet_layer_id);
+[G, H, R, U, C, M, E, alpha]                =   get_vgg16_params(alexnet_layer_id);
 
 % word length [in bytes]
 WL                                          =   2;
@@ -23,7 +29,7 @@ WL                                          =   2;
 %% architecture parameters -----------------------------------------------------
 
 % total number of PEs (J^2)
-J2                                          =   256;
+J2                                          =   168;
 % choose flow: 'rs', 'nlr', 'os_ibm', 'os_sdn', 'ws'
 flow                                        =   'rs';
 
@@ -32,12 +38,12 @@ flow                                        =   'rs';
 % default number of PEs
 J2_default                                  =   256;
 % RF size for default area
-G_byte_default                              =   512;
+RF_byte_default                             =   512;
 % buffer size for default area
-Q_byte_default                              =   J2_default * G_byte_default;
+Q_byte_default                              =   J2_default * RF_byte_default;
 % total area (processing + storge) [um^2]
 B                                           =   J2_default * get_pe_area() + ...
-                                                J2_default * get_storage_area_from_size(G_byte_default) + ...
+                                                J2_default * get_storage_area_from_size(RF_byte_default) + ...
                                                 get_storage_area_from_size(Q_byte_default);
 % total storage area (buff + RF) [um^2]
 A                                           =   B - J2 * get_pe_area();
@@ -45,7 +51,7 @@ A                                           =   B - J2 * get_pe_area();
 %% other parameters ------------------------------------------------------------
 
 % number of trials to run optimization in order to avoid local minimal
-num_trials                                  =   100;
+num_trials                                  =   50;
 
 %% flows -----------------------------------------------------------------------
 
@@ -54,33 +60,34 @@ num_trials                                  =   100;
 
 if      ( strcmp(flow,'rs') )
     % row stationary:           register file size = ( pqR+qR+p ) * WL
-    G_byte                                      =   256 * WL; 
-    Q_byte                                      =   get_buffer_size(A, J2, G_byte);
-    [access, reuse, params, thruput]            =   rs_flow       (N, C, M, H, R, E, U, alpha, J2, Q_byte, G_byte, WL, num_trials);
+    RF_byte                                     =   256 * WL; 
+%     Q_byte                                      =   get_buffer_size(A, J2, RF_byte);
+    Q_byte                                      =   98304;
+    [access, reuse, params, thruput]            =   rs_flow       (G, N, C, M, H, R, E, U, alpha, J2, Q_byte, RF_byte, WL, num_trials);
     [~, energy_cost]                            =   get_energy_cost(access);
 elseif  ( strcmp(flow,'nlr') )
     % no local reuse:           register file size = 0
-    G_byte                                      =   0 * WL; 
-    Q_byte                                      =   get_buffer_size(A, J2, G_byte);
-    [access, reuse, params, thruput]            =   nlr_flow      (N, C, M, H, R, E, U, alpha, J2, Q_byte, G_byte, WL, num_trials);
+    RF_byte                                     =   0 * WL; 
+    Q_byte                                      =   get_buffer_size(A, J2, RF_byte);
+    [access, reuse, params, thruput]            =   nlr_flow      (N, C, M, H, R, E, U, alpha, J2, Q_byte, RF_byte, WL, num_trials);
     [~, energy_cost]                            =   get_energy_cost(access);
 elseif  ( strcmp(flow,'os_ibm') )
     % output stationary (IBM):  register file size = 1 * WL
-    G_byte                                      =   1 * WL; 
-    Q_byte                                      =   get_buffer_size(A, J2, G_byte);
-    [access, reuse, params, thruput]            =   os_ibm_flow   (N, C, M, H, R, E, U, alpha, J2, Q_byte, G_byte, WL, num_trials);
+    RF_byte                                     =   1 * WL; 
+    Q_byte                                      =   get_buffer_size(A, J2, RF_byte);
+    [access, reuse, params, thruput]            =   os_ibm_flow   (N, C, M, H, R, E, U, alpha, J2, Q_byte, RF_byte, WL, num_trials);
     [~, energy_cost]                            =   get_energy_cost(access);
 elseif  ( strcmp(flow,'os_sdn') )
     % output stationary (SDN):  register file size = (U+RU) * WL
-    G_byte                                      =   (U+R*U) * WL; 
-    Q_byte                                      =   get_buffer_size(A, J2, G_byte);
-    [access, reuse, params, thruput]            =   os_sdn_flow   (N, C, M, H, R, E, U, alpha, J2, Q_byte, G_byte, WL, num_trials);
+    RF_byte                                     =   (U+R*U) * WL; 
+    Q_byte                                      =   get_buffer_size(A, J2, RF_byte);
+    [access, reuse, params, thruput]            =   os_sdn_flow   (N, C, M, H, R, E, U, alpha, J2, Q_byte, RF_byte, WL, num_trials);
     [~, energy_cost]                            =   get_energy_cost(access);
 elseif  ( strcmp(flow,'ws') )
     % weight stationary:        register file size = ( q+1 ) * WL
-    G_byte                                      =   128 * WL; 
-    Q_byte                                      =   get_buffer_size(A, J2, G_byte);
-    [access, reuse, params, thruput]            =   ws_flow       (N, C, M, H, R, E, U, alpha, J2, Q_byte, G_byte, WL, num_trials);
+    RF_byte                                     =   128 * WL; 
+    Q_byte                                      =   get_buffer_size(A, J2, RF_byte);
+    [access, reuse, params, thruput]            =   ws_flow       (N, C, M, H, R, E, U, alpha, J2, Q_byte, RF_byte, WL, num_trials);
     [~, energy_cost]                            =   get_energy_cost(access);
 end
 
