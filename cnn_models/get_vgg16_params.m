@@ -9,7 +9,8 @@ function [G, H, R, U, C, M, E, alpha, P] = get_vgg16_params(layer_id)
     % P: padding on each side
     
     if      layer_id == 1
-        H                           =   226;
+%         H                           =   226;
+        H                           =   114;
         R                           =   3;
         U                           =   1;
         C                           =   3;
@@ -17,7 +18,8 @@ function [G, H, R, U, C, M, E, alpha, P] = get_vgg16_params(layer_id)
         G                           =   1;
         P                           =   1;
     elseif  layer_id == 2
-        H                           =   226;
+%         H                           =   226;
+        H                           =   114;
         R                           =   3;
         U                           =   1;
         C                           =   64;

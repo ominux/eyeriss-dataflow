@@ -7,7 +7,7 @@ project_setup();
 %% problem size parameters -----------------------------------------------------
 
 % batch_size
-N                                           =   4;
+N                                           =   3;
 % CNN size parameters
 %   G: number of groups
 %   H: input fmap size (width = height)

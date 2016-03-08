@@ -71,10 +71,10 @@ h                           =   U*e + R - U;
 beta                        =   e/h;
 
 % hack begins
-% m = 96;
+% m = 64;
 % n = 1;
-% e = 7;
-% k = 1;
+% e = 13;
+% k = 2;
 % h = U*e + R - U;
 % beta =   e/h;
 % hack ends
