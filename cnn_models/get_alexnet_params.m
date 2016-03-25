@@ -1,6 +1,6 @@
 function [G, H, R, U, C, M, E, alpha, P] = get_alexnet_params(layer_id)
 
-    % H: input fmap size (width = height)
+    % H: input fmap size (padded, width = height)
     % R: filter size (width = height)
     % U: stride size
     % C: number of channels

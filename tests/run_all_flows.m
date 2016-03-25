@@ -1,43 +1,49 @@
-function results = run_all_flows(J2, A, N, alexnet_layer_id, WL, num_trials)
+function results = run_all_flows(J, A, N, model_name, layer_id, WL, num_trials)
 
-    [H, R, U, C, M, E, alpha] =   get_alexnet_params(alexnet_layer_id);
+    if      strcmp(model_name, 'alexnet')
+        [G, H, R, U, C, M, E, alpha, ~] =   get_alexnet_params(layer_id);
+    elseif  strcmp(model_name, 'vgg16')
+        [G, H, R, U, C, M, E, alpha, ~] =   get_vgg16_params(layer_id);
+    else
+        error(['cannot recognize model name: ' model_name]);
+    end
 
     % row stationary
-    G_byte                          =   256 * WL; 
-    Q_byte                          =   get_buffer_size(A, J2, G_byte);
-    [access, ~, params, thruput]    =   rs_flow     (N, C, M, H, R, E, U, alpha, J2, Q_byte, G_byte, WL, num_trials); 
+    RF_byte                         =   256 * WL; 
+    Q_byte                          =   get_buffer_size(A, J, RF_byte);
+    [access, ~, params, thruput]    =   rs_flow         (G, N, C, M, H, R, E, U, alpha, J, Q_byte, RF_byte, WL, num_trials); 
     [~, results.RS.energy]          =   get_energy_cost(access);
     results.RS.thruput              =   thruput.active_pes;
     results.RS.params               =   params;
     results.RS.access               =   access;
     % no local reuse
-    G_byte                          =   0; 
-    Q_byte                          =   get_buffer_size(A, J2, G_byte);
-    [access, ~, params, thruput]    =   nlr_flow    (N, C, M, H, R, E, U, alpha, J2, Q_byte, G_byte, WL, num_trials);
+    RF_byte                         =   0; 
+    Q_byte                          =   get_buffer_size(A, J, RF_byte);
+    [access, ~, params, thruput]    =   nlr_flow    (G, N, C, M, H, R, E, U, alpha, J, Q_byte, RF_byte, WL, num_trials);
     [~, results.NLR.energy]         =   get_energy_cost(access);
     results.NLR.thruput             =   thruput.active_pes;
     results.NLR.params              =   params;
     results.NLR.access              =   access;
-    % output stationary (ibm)
-    G_byte                          =   1 * WL; 
-    Q_byte                          =   get_buffer_size(A, J2, G_byte);
-    [access, ~, params, thruput]    =   os_ibm_flow (N, C, M, H, R, E, U, alpha, J2, Q_byte, G_byte, WL, num_trials);
-    [~, results.OS_IBM.energy]      =   get_energy_cost(access);
-    results.OS_IBM.thruput          =   thruput.active_pes;
-    results.OS_IBM.params           =   params;
-    results.OS_IBM.access           =   access;
-    % output stationary (shidiannao)
-    G_byte                          =   (U+R*U) * WL; 
-    Q_byte                          =   get_buffer_size(A, J2, G_byte);
-    [access, ~, params, thruput]    =   os_sdn_flow (N, C, M, H, R, E, U, alpha, J2, Q_byte, G_byte, WL, num_trials);
-    [~, results.OS_SDN.energy]      =   get_energy_cost(access);
-    results.OS_SDN.thruput          =   thruput.active_pes;
-    results.OS_SDN.params           =   params;
-    results.OS_SDN.access           =   access;
+    % output stationary moc-mop
+    RF_byte                         =   1 * WL; 
+    Q_byte                          =   get_buffer_size(A, J, RF_byte);
+    [access, ~, params, thruput]    =   os_moc_mop_flow (G, N, C, M, H, R, E, U, alpha, J, Q_byte, RF_byte, WL, num_trials);
+    [~, results.OS_MOC_MOP.energy]  =   get_energy_cost(access);
+    results.OS_MOC_MOP.thruput      =   thruput.active_pes;
+    results.OS_MOC_MOP.params       =   params;
+    results.OS_MOC_MOP.access       =   access;
+    % output stationary soc-mop
+    RF_byte                         =   (1+U+R*U) * WL; 
+    Q_byte                          =   get_buffer_size(A, J, RF_byte);
+    [access, ~, params, thruput]    =   os_soc_mop_flow (G, N, C, M, H, R, E, U, alpha, J, Q_byte, RF_byte, WL, num_trials);
+    [~, results.OS_SOC_MOP.energy]  =   get_energy_cost(access);
+    results.OS_SOC_MOP.thruput      =   thruput.active_pes;
+    results.OS_SOC_MOP.params       =   params;
+    results.OS_SOC_MOP.access       =   access;
     % weight stationary
-    G_byte                          =   128 * WL; 
-    Q_byte                          =   get_buffer_size(A, J2, G_byte);
-    [access, ~, params, thruput]    =   ws_flow     (N, C, M, H, R, E, U, alpha, J2, Q_byte, G_byte, WL, num_trials);
+    RF_byte                         =   1 * WL; 
+    Q_byte                          =   get_buffer_size(A, J, RF_byte);
+    [access, ~, params, thruput]    =   ws_flow         (G, N, C, M, H, R, E, U, alpha, J, Q_byte, RF_byte, WL, num_trials);
     [~, results.WS.energy]          =   get_energy_cost(access);
     results.WS.thruput              =   thruput.active_pes;
     results.WS.params               =   params;

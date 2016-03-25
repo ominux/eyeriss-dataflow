@@ -1,4 +1,4 @@
-function    [access, reuse, params, thruput] = rs_flow(G, N, C, M, H, R, E, U, alpha, J2, Q_byte, RF_byte, WL, num_trials)
+function    [access, reuse, params, thruput] = rs_flow(G, N, C, M, H, R, E, U, alpha, J, Q_byte, RF_byte, WL, num_trials)
 
 %% num data --------------------------------------------------------------------
 
@@ -12,24 +12,24 @@ num_ofmap_values            =   G * N * M * E^2;
 %% memory size -----------------------------------------------------------------
 
 % buffer size [in words]
-Q                           =   floor(Q_byte / WL);
+Q                           =   floor(Q_byte  / WL);
 % register size [in words]
 RF                          =   floor(RF_byte / WL);
 
 %% memory level accesses optimization ------------------------------------------
 
-% x = [m n k e]
+% x = [m n k f]
 
-e_max                       =   min([E floor(J2/R)]);
+f_max                       =   min([E floor(J/R)]);
 
 buffer_size_constraint      =   @(x) ...
                                 deal ...
-                                ( ... % mnEe + nkHh - Q, h = Ue+R-U
-                                    ( x(1)*x(2)*E*x(4) + x(2)*x(3)*H*(U*x(4)+R-U) - Q ), ...
+                                ( ... % nmEf + nkHw - Q, w = Uf+R-U
+                                    ( x(2)*x(1)*E*x(4) + x(2)*x(3)*H*(U*x(4)+R-U) - Q ), ...
                                     [] ...
                                 );
 
-num_mem_reads_func          =   @(x) ... % num_weights * ceil(N/n)ceil(E/e) + num_inputs * ceil(M/m)*(alpha/beta), beta = e/h
+num_mem_reads_func          =   @(x) ... % num_weights * ceil(N/n)ceil(E/f) + num_inputs * ceil(M/m)*(alpha/beta), beta = e/h
                                 ( ...
                                     num_weights * ceil(E/x(4)) * ceil(N/x(2)) + ...
                                     num_ifmap_values * ceil(M/x(1)) * ( alpha / (x(4)/(U*x(4)+R-U)) ) ...
@@ -47,7 +47,7 @@ for i = 1:num_trials
                                     [], [], ...                 % linear inequality constraints
                                     [], [], ...                 % blank
                                     [1; 1; 1; 1], ...           % lower bound of x
-                                    [M; N; C; e_max], ...       % upper bound of x
+                                    [M; N; C; f_max], ...       % upper bound of x
                                     buffer_size_constraint, ... % non-linear constraints
                                     [1 2 3 4], ...              % integer constraints
                                     ga_opts ...                 % ga options
@@ -66,32 +66,35 @@ end
 m                           =   x(1);
 n                           =   x(2);
 k                           =   x(3);
-e                           =   x(4);
-h                           =   U*e + R - U;
-beta                        =   e/h;
+f                           =   x(4);
+w                           =   U*f + R - U;
+beta                        =   f/w;
 
 % hack begins
 % m = 64;
 % n = 1;
 % e = 13;
 % k = 2;
-% h = U*e + R - U;
-% beta =   e/h;
+% h = U*f + R - U;
+% beta =   f/w;
 % hack ends
 
 %% buffer level accesses optimization ------------------------------------------
 
 % x = [p q r]
+
+r_max                       =   min([floor(J/R/f) k]);
+
 register_size_constraint    =   @(x) ...
                                 deal ...
-                                ( ... pqR + qR + p - G
+                                ( ... pqR + qR + p - RF
                                     ( x(1)*x(2)*R + x(2)*R + x(1) - RF ), ...
                                     [] ...
                                 );
 
 num_buff_acc_func           =   @(x) ...
                                 ( ... num_inputs * ceil(M/m) * ceil(m/pt) * (alpha/beta) + 2 * num_outputs * (ceil(C/k)*ceil(k/qr)-1)
-                                    num_ifmap_values * ceil(M/m) * ceil( m/(x(1)*floor(J2/(R*e*x(3)))) ) * (alpha/beta) + ...
+                                    num_ifmap_values * ceil(M/m) * ceil( m/(x(1)*floor(J/(R*f*x(3)))) ) * (alpha/beta) + ...
                                     2 * num_ofmap_values * ( ceil(C/k) * ceil(k/(x(2)*x(3))) - 1 ) ...
                                 );
 
@@ -107,7 +110,7 @@ for i = 1:num_trials
                                     [], [], ...                         % linear inequality constraints
                                     [], [], ...                         % blank
                                     [1; 1; 1], ...                      % lower bound of x
-                                    [m; k; min([floor(J2/R/e) k])], ... % upper bound of x
+                                    [m; k; r_max], ...                  % upper bound of x
                                     register_size_constraint, ...       % non-linear constraints
                                     [1 2 3], ...                        % integer constraints
                                     ga_opts ...                         % ga options
@@ -126,7 +129,7 @@ end
 p                           =   x(1);
 q                           =   x(2);
 r                           =   x(3);
-t                           =   min([floor(J2/R/e/r) ceil(m/p)]);
+t                           =   min([floor(J/R/f/r) ceil(m/p)]);
 
 % % hack begins
 % p                           =   16;
@@ -140,9 +143,9 @@ t                           =   min([floor(J2/R/e/r) ceil(m/p)]);
 % params
 params.m                    =   m;
 params.n                    =   n;
-params.e                    =   e;
+params.f                    =   f;
 params.k                    =   k;
-params.h                    =   h;
+params.w                    =   w;
 params.beta                 =   beta;
 params.p                    =   p;
 params.q                    =   q;
@@ -152,7 +155,7 @@ params.t                    =   t;
 % reuse
 reuse.memory.ofmap          =   1;
 reuse.memory.ifmap          =   ceil(M/m) * (alpha/beta);
-reuse.memory.weight         =   ceil(N/n) * ceil(E/e);
+reuse.memory.weight         =   ceil(N/n) * ceil(E/f);
 
 reuse.buffer.ofmap          =   ceil(C/(q*r));
 reuse.buffer.ifmap          =   ceil(m/(p*t));
@@ -160,7 +163,7 @@ reuse.buffer.weight         =   1;
 
 reuse.array.ofmap           =   r*R;
 reuse.array.ifmap           =   t*R*beta;
-reuse.array.weight          =   e;
+reuse.array.weight          =   f;
 
 reuse.reg.ofmap             =   q*R;
 reuse.reg.ifmap             =   p*R*alpha;
@@ -168,7 +171,7 @@ reuse.reg.weight            =   n*E;
 
 % access
 access.memory.reads.ifmap   =   num_ifmap_values    * ceil(M/m) * (alpha/beta);
-access.memory.reads.weight  =   num_weights         * ceil(N/n) * ceil(E/e);
+access.memory.reads.weight  =   num_weights         * ceil(N/n) * ceil(E/f);
 access.memory.reads.ofmap   =   0;
 access.memory.reads.total   =   access.memory.reads.ifmap + access.memory.reads.weight + access.memory.reads.ofmap;
 access.memory.writes.ifmap  =   0;
@@ -200,7 +203,7 @@ access.reg.writes.ofmap     =   num_ofmap_values    * ( C*R^2 - ceil(C/q)*R );
 access.reg.writes.total     =   access.reg.writes.ifmap + access.reg.writes.weight + access.reg.writes.ofmap;
 
 % thruput
-thruput.active_pes          =   R*e*r*t;
-thruput.active_pe_percent   =   thruput.active_pes/J2;
+thruput.active_pes          =   R*f*r*t;
+thruput.active_pe_percent   =   thruput.active_pes/J;
 
 end

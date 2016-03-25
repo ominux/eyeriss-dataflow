@@ -1,5 +1,26 @@
 close all; clear; clc; 
 
+%% parameter config -------------------------------------------------------
+
+% word length [in bytes]
+WL                                          =   2;
+% number of PEs
+J                                           =   [256 512 1024];     % [128 256 512 1024];
+% batch size
+N                                           =   [1 16 64];          % [1 16 64 128];
+% CNN model name. (1) alexnet, (2) vgg16
+model_name                                  =   'alexnet';
+% ID of the CNN layer
+layer_id                                    =   [1 2 3 4 5 6 7 8];  % alexnet: 1-8, vgg: 1-16;
+% RF size for default area [bytes]
+RF_byte_default                             =   512;
+% times to run optimization to avoid local minima
+num_trials                                  =   300;
+
+%% setup project ---------------------------------------------------------------
+
+project_root = project_setup();
+
 %% parallel computation setup --------------------------------------------------
 
 % enable the use of multicores
@@ -10,57 +31,71 @@ if isempty(curr_parpool) && enable_multicores
     parpool('local');
 end
 
-%% parameter setup -------------------------------------------------------------
+%% pack simulation info --------------------------------------------------------
 
-% word length [in bytes]
-WL                                          =   2;
-% number of PEs
-J2                                          =   [256 512 1024]; % [128 256 512 1024];
-% batch size
-N                                           =   [1 16 64];      % [1 16 64 128];
-% layer ID of AlexNet
-alexnet_layer_id                            =   [6 7 8];        % alexnet: 1-8;
-% RF size for default area
-G_byte_default                              =   512;
-% times to run optimization to avoid local minima
-num_trials                                  =   300;
+meta.model_name                             =   model_name;
+meta.J                                      =   J;
+meta.N                                      =   N;
+meta.layer_id                               =   layer_id;
+meta.RF_byte_default                        =   RF_byte_default;
+meta.WL                                     =   WL;
 
 %% run all flows ---------------------------------------------------------------
 
 if enable_multicores
-    total_num_threads                       =   length(J2) * length(N) * length(alexnet_layer_id);
+    total_num_threads                       =   length(J) * length(N) * length(layer_id);
     % results cell
     results                                 =   cell(1, total_num_threads);
     fprintf('\n\n');    
     parfor par_th= 1:total_num_threads
-        k                                   =   floor( (par_th-1)/(length(J2) * length(N)) ) + 1;
-        j                                   =   floor( ((par_th - (k-1)*length(J2)*length(N))-1)/length(J2) ) + 1;
-        i                                   =   par_th - (k-1)*length(J2)*length(N) - (j-1)*length(J2);
-        fprintf('  Thread #%d (%d, %d, %d) Running... <J2 = %d, N = %d, AlexNet Layer ID = %d>\n', par_th, i, j, k, J2(i), N(j), alexnet_layer_id(k));
+        k                                   =   floor( (par_th-1)/(length(J) * length(N)) ) + 1;
+        j                                   =   floor( ((par_th - (k-1)*length(J)*length(N))-1)/length(J) ) + 1;
+        i                                   =   par_th - (k-1)*length(J)*length(N) - (j-1)*length(J);
+        fprintf('  Thread #%d (%d, %d, %d) Running... <J = %d, N = %d, AlexNet Layer ID = %d>\n', par_th, i, j, k, J(i), N(j), layer_id(k));
         
-        A                                   =   get_total_storage_area(J2(i), J2(i)*G_byte_default, G_byte_default);
-        results{par_th}                     =   run_all_flows(J2(i), A, N(j), alexnet_layer_id(k), WL, num_trials);
+        A                                   =   get_total_storage_area(J(i), J(i)*RF_byte_default, RF_byte_default);
+        results{par_th}                     =   run_all_flows(J(i), A, N(j), model_name, layer_id(k), WL, num_trials);
     end
-    results                                 =   reshape(results, [length(J2) length(N) length(alexnet_layer_id)]);
+    results                                 =   reshape(results, [length(J) length(N) length(layer_id)]);
 else
     % results cell
-    results                                 =   cell(length(J2), length(N), length(alexnet_layer_id));
-    for i = 1:length(J2)
-        A                                   =   get_total_storage_area(J2(i), J2(i)*G_byte_default, G_byte_default);
+    results                                 =   cell(length(J), length(N), length(layer_id));
+    for i = 1:length(J)
+        A                                   =   get_total_storage_area(J(i), J(i)*RF_byte_default, RF_byte_default);
         for j = 1:length(N)
-            for k = 1:length(alexnet_layer_id)
-                results{i, j, k}            =   run_all_flows(J2(i), A, N(j), alexnet_layer_id(k), WL, num_trials);
+            for k = 1:length(layer_id)
+                results{i, j, k}            =   run_all_flows(J(i), A, N(j), model_name, layer_id(k), WL, num_trials);
             end
         end
     end
 end
 
-save('results/test_flow_comparison_results_alexnet_fc_layers_256_512_1024', 'results');
+save([project_root filesep 'results' filesep 'test_flow_comparison_' datestr(datetime, 'yymmdd-HHMMSS')], 'meta', 'results');
 
-% fig4    = figure();
-% axes4   = axes('Parent', fig4, 'XTickLabel',{'RS', 'UCLA', 'IBM', 'SDN', 'WS'}, 'FontSize', 20);
-% hold on; grid on;
-% bar(results{1, 1, 1}.energy);
-% ylabel('Normalized Energy', 'fontsize', 20);
-% axis tight;
+
+%% plot ------------------------------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
