@@ -71,31 +71,3 @@ else
 end
 
 save([project_root filesep 'results' filesep 'test_flow_comparison_' datestr(datetime, 'yymmdd-HHMMSS')], 'meta', 'results');
-
-
-%% plot ------------------------------------------------------------------------
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

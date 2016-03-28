@@ -52,11 +52,11 @@ for i = 1:num_trials
                                     [1 2 3 4], ...              % integer constraints
                                     ga_opts ...                 % ga options
                                 );
-    if curr_mem_reads <= num_mem_reads * 0.95
+    if curr_mem_reads < num_mem_reads %* 0.95
         num_mem_reads       =   curr_mem_reads;
         x                   =   curr_x;
-    elseif curr_mem_reads <= num_mem_reads
-        if prod(curr_x) > prod(x)
+    elseif curr_mem_reads == num_mem_reads
+        if (curr_x(1)*curr_x(3)*curr_x(4)) > (x(1)*x(3)*x(4)) % find the largest f*m*k (so to maximize possible f*r*t)
             x               =   curr_x;
         end
     end
@@ -65,19 +65,10 @@ end
 % get optimization results
 m                           =   x(1);
 n                           =   x(2);
-k                           =   x(3);
 f                           =   x(4);
 w                           =   U*f + R - U;
+k                           =   floor((Q - n*m*E*f)/(n*H*w));
 beta                        =   f/w;
-
-% hack begins
-% m = 64;
-% n = 1;
-% e = 13;
-% k = 2;
-% h = U*f + R - U;
-% beta =   f/w;
-% hack ends
 
 %% buffer level accesses optimization ------------------------------------------
 
@@ -95,7 +86,7 @@ register_size_constraint    =   @(x) ...
 num_buff_acc_func           =   @(x) ...
                                 ( ... num_inputs * ceil(M/m) * ceil(m/pt) * (alpha/beta) + 2 * num_outputs * (ceil(C/k)*ceil(k/qr)-1)
                                     num_ifmap_values * ceil(M/m) * ceil( m/(x(1)*floor(J/(R*f*x(3)))) ) * (alpha/beta) + ...
-                                    2 * num_ofmap_values * ( ceil(C/k) * ceil(k/(x(2)*x(3))) - 1 ) ...
+                                    2 * num_ofmap_values * ( ceil(C/(x(2)*x(3))) - 1 ) ...
                                 );
 
 num_buff_acc                =   Inf;
@@ -119,7 +110,7 @@ for i = 1:num_trials
         num_buff_acc        =   curr_buff_acc;
         x                   =   curr_x;
     elseif curr_buff_acc == num_buff_acc
-        if prod(curr_x) > prod(x)
+        if curr_x(3)*min([floor(J/R/f/curr_x(3)) ceil(m/curr_x(1))]) > x(3)*min([floor(J/R/f/x(3)) ceil(m/x(1))])
             x               =   curr_x;
         end
     end
@@ -137,6 +128,20 @@ t                           =   min([floor(J/R/f/r) ceil(m/p)]);
 % r                           =   1;
 % t                           =   2;
 % hack ends
+
+%% sanity check ----------------------------------------------------------------
+
+if (p*q*R+q*R+p > RF)
+    error('RF size constraint invalid.');
+end
+
+if (R*f*r*t > J)
+    error('PE array size constraint invalid.');
+end
+
+if ( n*m*E*f + n*k*H*w > Q)
+    error('Buffer size constraint invalid.');
+end
 
 %% output ----------------------------------------------------------------------
 
@@ -201,6 +206,8 @@ access.reg.writes.ifmap     =   0;
 access.reg.writes.weight    =   0;
 access.reg.writes.ofmap     =   num_ofmap_values    * ( C*R^2 - ceil(C/q)*R );
 access.reg.writes.total     =   access.reg.writes.ifmap + access.reg.writes.weight + access.reg.writes.ofmap;
+
+access.alu                  =   G*N*M*C*E^2*R^2;
 
 % thruput
 thruput.active_pes          =   R*f*r*t;
