@@ -15,7 +15,7 @@ layer_ids                                   =   [1 2 3 4 5 6 7 8];  % alexnet: 1
 % RF size for default area [bytes]
 RF_byte_default                             =   512;
 % times to run optimization to avoid local minima
-num_trials                                  =   1;
+num_trials                                  =   600;
 
 %% setup project ----------------------------------------------------------
 
@@ -66,12 +66,12 @@ N_threads                                   =   reshape(repmat(Ns, [num_Js num_l
 layer_id_threads                            =   reshape(repmat(layer_ids, [(num_Js*num_Ns) 1]), [num_threads 1])';
 
 fprintf('\n\n');
-fprintf(['Running CNN model: ''' model_name '''']);
+fprintf(['  Running CNN model: ''' model_name '''\n']);
 parfor i= 1:num_threads
     J                                       =   J_threads(i);
     N                                       =   N_threads(i);
     layer_id                                =   layer_id_threads(i);
-    fprintf('  Thread #%d Running... <J = %d, N = %d, AlexNet Layer ID = %d>\n', i, J, N, layer_id);
+    fprintf('      Thread #%4d Running... <J = %4d, N = %3d, AlexNet Layer ID = %3d>\n', i, J, N, layer_id);
     
     A                                       =   get_total_storage_area(J, J*RF_byte_default, RF_byte_default);
     results{i}                              =   run_all_flows(N, get_model_params(layer_id), A, J, WL, energy_ratios, num_trials);

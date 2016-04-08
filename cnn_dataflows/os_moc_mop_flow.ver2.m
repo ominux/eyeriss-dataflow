@@ -113,6 +113,7 @@ end
 %% output -----------------------------------------------------------------
 
 % params
+params.validity             =   1;
 params.m                    =   m;
 params.nef                  =   nef;
 params.p                    =   p;

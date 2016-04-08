@@ -20,13 +20,13 @@ WL                                          =   2;
 
 % total number of PEs (J^2)
 J                                           =   256;
-% choose flow: 'rs', 'nlr', 'os_ibm', 'os_sdn', 'ws'
-flow                                        =   'rs';
+% choose flow: 'rs', 'ws', 'nlr'
+flow                                        =   'nlr';
                                           
 %% other parameters -------------------------------------------------------
 
 % number of trials to run optimization in order to avoid local minimal
-num_trials                                  =   500;
+num_trials                                  =   1;
 
 %% calculate default area -------------------------------------------------
 
@@ -56,7 +56,17 @@ if      ( strcmp(flow,'rs') )
     % row stationary:           register file size = ( pqR+qR+p ) * WL
     RF_byte                                     =   256 * WL; 
     Q_byte                                      =   get_buffer_size(A, J, RF_byte);
-    [access, reuse, params, thruput]            =   rs_flow       (N, model_params, J, Q_byte, RF_byte, WL, energy_ratios, num_trials);
+    [access, reuse, params, thruput]            =   rs_flow         (N, model_params, J, Q_byte, RF_byte, WL, energy_ratios, num_trials);
+elseif  ( strcmp(flow,'ws') )
+    % row stationary:           register file size = ( pqR+qR+p ) * WL
+    RF_byte                                     =   1 * WL; 
+    Q_byte                                      =   get_buffer_size(A, J, RF_byte);
+    [access, reuse, params, thruput]            =   ws_flow         (N, model_params, J, Q_byte, RF_byte, WL, energy_ratios, num_trials);
+elseif  ( strcmp(flow,'nlr') )
+    % row stationary:           register file size = ( pqR+qR+p ) * WL
+    RF_byte                                     =   0; 
+    Q_byte                                      =   get_buffer_size(A, J, RF_byte);
+    [access, reuse, params, thruput]            =   nlr_flow        (N, model_params, J, Q_byte, RF_byte, WL, energy_ratios, num_trials);
 else
     error(['Cannot recognize the specified dataflow: ''' flow '''.']);
 end

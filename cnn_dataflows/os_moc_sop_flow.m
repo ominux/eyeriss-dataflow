@@ -60,6 +60,7 @@ end
 %% output ----------------------------------------------------------------------
 
 % parameters
+params.validity             =   1;
 params.m                    =   m;
 params.p                    =   p;
 

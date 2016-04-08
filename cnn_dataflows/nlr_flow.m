@@ -34,7 +34,7 @@ RF                          =   floor(RF_byte / WL);
 %% make sure problem size fit in the hardware -----------------------------
 
 % assuming all tiling parameters are at their minimum values
-if (J<1) || ((R*S+1)>Q) || (RF<1)
+if (J<1) || ((R*S+1)>Q)
     access                  =   0;
     reuse                   =   0;
     params.validity         =   0;
@@ -119,6 +119,7 @@ end
 %% outputs ----------------------------------------------------------------
 
 % parameters
+params.validity             =   1;
 params.n                    =   n;
 params.m                    =   m;
 params.p                    =   p;
