@@ -39,7 +39,7 @@ results.WS.Q_byte                           =   get_buffer_size(A, J, results.WS
 results.OS_SOC_MOP.RF_byte                  =   (11*4 + 4 + 1) * WL; % (UR+U+1), R=11, U=4
 results.OS_SOC_MOP.Q_byte                   =   get_buffer_size(A, J, results.OS_SOC_MOP.RF_byte);
 % OS MOC-MOP dataflow
-results.OS_MOC_MOP.RF_byte                  =   1 * WL;
+results.OS_MOC_MOP.RF_byte                  =   (1 + 4) * WL;
 results.OS_MOC_MOP.Q_byte                   =   get_buffer_size(A, J, results.OS_MOC_MOP.RF_byte);
 % OS MOC-SOP dataflow
 results.OS_MOC_SOP.RF_byte                  =   1 * WL;

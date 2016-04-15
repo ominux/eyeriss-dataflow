@@ -5,13 +5,16 @@ close all; clear; clc;
 % word length [in bytes]
 WL                                          =   2;
 % number of PEs
-Js                                          =   [256 512 1024];     % [128 256 512 1024];
+% Js                                          =   [256 512 1024];     % [128 256 512 1024];
+Js                                          =   1024;     % [128 256 512 1024];
 % batch size
-Ns                                          =   [1 16 64];          % [1 16 64 128];
+% Ns                                          =   [1 16 64];      % [1 16 64 128];
+Ns                                          =   [16 64 256 1024 2048];      % [1 16 64 128];
 % CNN model name. (1) alexnet, (2) vgg16
 model_name                                  =   'alexnet';
 % ID of the CNN layer
-layer_ids                                   =   [1 2 3 4 5 6 7 8];  % alexnet: 1-8, vgg: 1-16;
+% layer_ids                                   =   [1 2 3 4 5];  % alexnet: 1-8, vgg: 1-16;
+layer_ids                                   =   [6 7 8];  % alexnet: 1-8, vgg: 1-16;
 % RF size for default area [bytes]
 RF_byte_default                             =   512;
 % times to run optimization to avoid local minima

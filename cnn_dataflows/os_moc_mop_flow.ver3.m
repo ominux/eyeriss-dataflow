@@ -34,7 +34,7 @@ RF                          =   floor(RF_byte / WL);
 %% make sure problem size fit in the hardware -----------------------------
 
 % assuming all tiling parameters are at their minimum values
-if (RF<1) || (J<1) || ((C*R*S)>Q)
+if (RF<(U+1)) || (J<1) || ((C*R*S)>Q)
     access                  =   0;
     reuse                   =   0;
     params.validity         =   0;
@@ -63,10 +63,10 @@ fmin                        =   @(x) ...
                                   ... % buffer: num_weights*ceil(N/n)*E*ceil(F/f) + num_inputs * ceil(M/p)*R*S*alpha_v*alpha_h
                                   ... % noc:    num_weights*N*E*F + num_inputs*M*R*S*alpha_v*alpha_h
                                   ... % reg:    2*num_outputs*(CRS-1)
-                                    ( num_weights + num_ifmap_values*ceil(M/x(1))*R*alpha_v*(alpha_h/(x(4)/(U*x(4)+S-U))) + num_ofmap_values )  * energy_ratios.dram + ...
-                                    ( num_weights*ceil(N/x(2))*E*ceil(F/x(4)) + num_ifmap_values*ceil(M/x(3))*R*S*alpha_v*alpha_h )             * energy_ratios.buffer + ...
-                                    ( num_weights*N*E*F + num_ifmap_values*M*R*S*alpha_v*alpha_h )                                              * energy_ratios.noc + ...
-                                    ( 2*num_ofmap_values*(C*R*S-1) )                                                                            * energy_ratios.reg ...
+                                    ( num_weights + num_ifmap_values*ceil(M/x(1))*R*alpha_v*(alpha_h/(x(4)/(U*x(4)+S-U))) + num_ofmap_values )          * energy_ratios.dram + ...
+                                    ( num_weights*ceil(N/x(2))*E*ceil(F/x(4)) + num_ifmap_values*ceil(M/x(3))*R*alpha_v*(alpha_h/(x(4)/(U*x(4)+S-U))) ) * energy_ratios.buffer + ...
+                                    ( num_weights*N*E*F + num_ifmap_values*M*R*S*alpha_v*alpha_h )                                                      * energy_ratios.noc + ...
+                                    ( 2*num_ofmap_values*(C*R*S-1) )                                                                                    * energy_ratios.reg ...
                                 );
 
 min_f                       =   Inf;
@@ -130,11 +130,11 @@ reuse.memory.ifmap          =   ceil(M/m)*R*alpha_v*(alpha_h/beta_h);
 reuse.memory.weight         =   1;
 
 reuse.buffer.ofmap          =   1;
-reuse.buffer.ifmap          =   ceil(m/p)*S*beta_h;
+reuse.buffer.ifmap          =   ceil(m/p);
 reuse.buffer.weight         =   ceil(N/n)*E*ceil(F/f);
 
 reuse.array.ofmap           =   1;
-reuse.array.ifmap           =   p;
+reuse.array.ifmap           =   p*S*beta_h;
 reuse.array.weight          =   n*f;
 
 reuse.reg.ofmap             =   C*R*S;
@@ -151,7 +151,7 @@ access.memory.writes.weight =   0;
 access.memory.writes.ofmap  =   num_ofmap_values;
 access.memory.writes.total  =   access.memory.writes.ifmap + access.memory.writes.weight + access.memory.writes.ofmap;
 
-access.buffer.reads.ifmap   =   num_ifmap_values * ceil(M/p)*R*S*alpha_v*alpha_h;
+access.buffer.reads.ifmap   =   num_ifmap_values * ceil(M/p)*R*alpha_v*(alpha_h/beta_h);
 access.buffer.reads.weight  =   num_weights * ceil(N/n)*E*ceil(F/f);
 access.buffer.reads.ofmap   =   0;
 access.buffer.reads.total   =   access.buffer.reads.ifmap + access.buffer.reads.weight + access.buffer.reads.ofmap;

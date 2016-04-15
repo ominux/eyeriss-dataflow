@@ -14,14 +14,16 @@ function results = run_all_flows(N, model_params, A, J, WL, energy_ratios, num_t
     results.WS.params               =   params;
     results.WS.access               =   access;
     %% output stationary soc-mop ------------------------------------------
-    RF_byte                         =   (1+model_params.U+model_params.R*model_params.U) * WL; 
+%     RF_byte                         =   (1+model_params.U+model_params.R*model_params.U) * WL; 
+    RF_byte                         =   (1 + 4 + 4*11) * WL;
     Q_byte                          =   get_buffer_size(A, J, RF_byte);
     [access, ~, params, thruput]    =   os_soc_mop_flow (N, model_params, J, Q_byte, RF_byte, WL, energy_ratios, num_trials);
     results.OS_SOC_MOP.thruput      =   thruput;
     results.OS_SOC_MOP.params       =   params;
     results.OS_SOC_MOP.access       =   access;
     %% output stationary moc-mop ------------------------------------------
-    RF_byte                         =   1 * WL; 
+%     RF_byte                         =   (1+model_params.U) * WL; 
+    RF_byte                         =   (1+4) * WL;
     Q_byte                          =   get_buffer_size(A, J, RF_byte);
     [access, ~, params, thruput]    =   os_moc_mop_flow (N, model_params, J, Q_byte, RF_byte, WL, energy_ratios, num_trials);
     results.OS_MOC_MOP.thruput      =   thruput;
