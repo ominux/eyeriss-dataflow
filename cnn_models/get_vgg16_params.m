@@ -11,8 +11,8 @@ function model_params = get_vgg16_params(layer_id)
     % P: padding on each side
     
     if      layer_id == 1
-%         model_params.H          =   226;
-        model_params.H          =   114;
+        model_params.H          =   226;
+%         model_params.H          =   114;
         model_params.W          =   model_params.H;
         model_params.R          =   3;
         model_params.S          =   model_params.R;
@@ -22,8 +22,8 @@ function model_params = get_vgg16_params(layer_id)
         model_params.G          =   1;
         model_params.P          =   1;
     elseif  layer_id == 2
-%         model_params.H          =   226;
-        model_params.H          =   114;
+        model_params.H          =   226;
+%         model_params.H          =   114;
         model_params.W          =   model_params.H;
         model_params.R          =   3;
         model_params.S          =   model_params.R;
@@ -142,8 +142,38 @@ function model_params = get_vgg16_params(layer_id)
         model_params.M          =   512;
         model_params.G          =   1;
         model_params.P          =   1;
+    elseif  layer_id == 14
+        model_params.H          =   7;
+        model_params.W          =   model_params.H;
+        model_params.R          =   7;
+        model_params.S          =   model_params.R;
+        model_params.U          =   1;
+        model_params.C          =   512;
+        model_params.M          =   4096;
+        model_params.G          =   1;
+        model_params.P          =   0;
+    elseif  layer_id == 15
+        model_params.H          =   1;
+        model_params.W          =   model_params.H;
+        model_params.R          =   1;
+        model_params.S          =   model_params.R;
+        model_params.U          =   1;
+        model_params.C          =   4096;
+        model_params.M          =   4096;
+        model_params.G          =   1;
+        model_params.P          =   0;
+    elseif  layer_id == 16
+        model_params.H          =   1;
+        model_params.W          =   model_params.H;
+        model_params.R          =   1;
+        model_params.S          =   model_params.R;
+        model_params.U          =   1;
+        model_params.C          =   4096;
+        model_params.M          =   1000;
+        model_params.G          =   1;
+        model_params.P          =   0;
     else
-        error('Incorrect layer ID. Valid range: [1 13].');
+        error('Incorrect layer ID. Valid range: [1 16].');
     end
 
     % output fmap height/width

@@ -5,16 +5,13 @@ close all; clear; clc;
 % word length [in bytes]
 WL                                          =   2;
 % number of PEs
-% Js                                          =   [256 512 1024];     % [128 256 512 1024];
-Js                                          =   1024;     % [128 256 512 1024];
+Js                                          =   [256 1024];     % [128 256 512 1024];
 % batch size
-% Ns                                          =   [1 16 64];      % [1 16 64 128];
-Ns                                          =   [16 64 256 1024 2048];      % [1 16 64 128];
-% CNN model name. (1) alexnet, (2) vgg16
-model_name                                  =   'alexnet';
+Ns                                          =   [1 4 16 64];      % [1 16 64 256];
+% CNN model name. (1) alexnet, (2) vgg16, (3) squeezenet
+model_name                                  =   'squeezenet';
 % ID of the CNN layer
-% layer_ids                                   =   [1 2 3 4 5];  % alexnet: 1-8, vgg: 1-16;
-layer_ids                                   =   [6 7 8];  % alexnet: 1-8, vgg: 1-16;
+layer_ids                                   =   1:26;  % alexnet: 1-8, vgg16: 1-16;
 % RF size for default area [bytes]
 RF_byte_default                             =   512;
 % times to run optimization to avoid local minima
@@ -37,6 +34,8 @@ if      strcmp(model_name, 'alexnet')
     get_model_params            =   @get_alexnet_params;
 elseif  strcmp(model_name, 'vgg16')
     get_model_params            =   @get_vgg16_params;
+elseif  strcmp(model_name, 'squeezenet')
+    get_model_params            =   @get_squeezenet_params;
 else
     error(['cannot recognize model name: ' model_name]);
 end
@@ -74,7 +73,7 @@ parfor i= 1:num_threads
     J                                       =   J_threads(i);
     N                                       =   N_threads(i);
     layer_id                                =   layer_id_threads(i);
-    fprintf('      Thread #%4d Running... <J = %4d, N = %3d, AlexNet Layer ID = %3d>\n', i, J, N, layer_id);
+    fprintf('      Thread #%4d Running... <J = %4d, N = %3d, Layer ID = %3d>\n', i, J, N, layer_id);
     
     A                                       =   get_total_storage_area(J, J*RF_byte_default, RF_byte_default);
     results{i}                              =   run_all_flows(N, get_model_params(layer_id), A, J, WL, energy_ratios, num_trials);
