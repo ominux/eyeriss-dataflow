@@ -1,2 +1,2 @@
 # cnnflow
-CNN Flow Analysis (ASPLOS 2016)
+CNN Flow Analysis
